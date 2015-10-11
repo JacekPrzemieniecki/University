@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
@@ -7,78 +6,67 @@ namespace POD1
 {
     static class BeaufortCipher
     {
-        const int LettersInAlphabet = 'Z' - 'A' + 1;
+        static readonly byte[] EncryptedBuffer = new byte[Constants.BufferSize];
+        static readonly byte[] DecryptedBuffer = new byte[Constants.BufferSize];
 
         public static string Encrypt(string plain, string key)
         {
-            var encryptedBytes = Encrypt(Encoding.ASCII.GetBytes(plain.ToUpperInvariant()), new BeaufortKey(key));
+            var encryptedBytes = new byte[plain.Length];
+            Encrypt(Encoding.ASCII.GetBytes(plain.ToUpperInvariant()), encryptedBytes, new BeaufortKey(key));
             return Encoding.ASCII.GetString(encryptedBytes);
         }
 
-        public static char[] Encrypt(char[] plain, BeaufortKey key)
+        public static void Encrypt(char[] input, char[] output, BeaufortKey key)
         {
-            for (int i = 0; i < plain.Length; i++)
-            {
-                plain[i] = char.ToUpperInvariant(plain[i]);
-            }
-            var encryptedBytes = Encrypt(Encoding.ASCII.GetBytes(plain), key);
-            return Encoding.ASCII.GetChars(encryptedBytes);
+            Encoding.ASCII.GetBytes(input, 0, input.Length, DecryptedBuffer, 0);
+            Encrypt(DecryptedBuffer, EncryptedBuffer, key);
+            Encoding.ASCII.GetChars(EncryptedBuffer, 0, Constants.BufferSize, output, 0);
         }
 
-        public static byte[] Encrypt(byte[] plain, BeaufortKey key)
+        public static void Encrypt(byte[] input, byte[] output, BeaufortKey key)
         {
-            var encrypted = new byte[plain.Length];
-            Transform(plain, encrypted, key, EncryptOperation);
-            return encrypted;
+            Transform(input, output, key, EncryptOperation);
         }
 
         public static string Decrypt(string encrypted, string key)
         {
-            var encryptedBytes = Decrypt(Encoding.ASCII.GetBytes(encrypted), new BeaufortKey(key));
+            var encryptedBytes = new byte[encrypted.Length]; 
+            Decrypt(Encoding.ASCII.GetBytes(encrypted), encryptedBytes, new BeaufortKey(key));
             return Encoding.ASCII.GetString(encryptedBytes);
         }
 
-        public static char[] Decrypt(char[] encrypted, BeaufortKey key)
+        public static void Decrypt(char[] input, char[] output, BeaufortKey key)
         {
-            var decryptedBytes = Decrypt(Encoding.ASCII.GetBytes(encrypted), key);
-            return Encoding.ASCII.GetChars(decryptedBytes);
+            Encoding.ASCII.GetBytes(input, 0, input.Length, EncryptedBuffer, 0);
+            Decrypt(EncryptedBuffer, DecryptedBuffer, key);
+            Encoding.ASCII.GetChars(DecryptedBuffer, 0, Constants.BufferSize, output, 0);
         }
 
-        public static byte[] Decrypt(byte[] encrypted, BeaufortKey key)
+        public static void Decrypt(byte[] input, byte[] output, BeaufortKey key)
         {
-            var decrypted = new byte[encrypted.Length];
-            Transform(encrypted, decrypted, key, DecryptOperation);
-            return decrypted;
+            Transform(input, output, key, DecryptOperation);
         }
 
         static byte EncryptOperation(byte plain, byte key)
         {
-            return (byte) (plain > key ? (plain - key) : (plain + (LettersInAlphabet) - key));
+            return (byte) (plain > key ? (plain - key) : (plain + Constants.AlphabetLength - key));
         }
 
         static byte DecryptOperation(byte encrypted, byte key)
         {
             var plain = encrypted + key;
-            return (byte) (plain < LettersInAlphabet ? plain : (plain - LettersInAlphabet));
+            return (byte) (plain < Constants.AlphabetLength ? plain : (plain - Constants.AlphabetLength));
         }
 
         static void Transform(byte[] input, byte[] output, BeaufortKey key, Func<byte, byte, byte> operation)
         {
             Debug.Assert(input.Length == output.Length);
-            const int aOffset = 'A' - 1;
             for (var i = 0; i < input.Length; i++)
             {
                 key.MoveNext();
-                if (input[i] < 'A' || input[i] > 'Z')
-                {
-                    output[i] = input[i];
-                }
-                else
-                {
-                    var inputNormalized = input[i] - aOffset;
-                    var outputNormalized = operation((byte) inputNormalized, key.Current);
-                    output[i] = (byte) (outputNormalized + aOffset);
-                }
+                var inputNormalized = input[i] - Constants.AsciiOffset;
+                var outputNormalized = operation((byte) inputNormalized, key.Current);
+                output[i] = (byte) (outputNormalized + Constants.AsciiOffset);
             }
         }
     }

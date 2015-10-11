@@ -75,17 +75,16 @@ namespace POD1
             }
         }
 
-        void TransformBetweenFiles(StreamReader source, StreamWriter dest, Func<char[], BeaufortKey, char[]> operation)
+        void TransformBetweenFiles(StreamReader source, StreamWriter dest, Action<char[], char[], BeaufortKey> operation)
         {
-            const int bufferSize = 1024*5;
-            var inBuffer = new char[bufferSize];
+            var inBuffer = new char[Constants.BufferSize];
+            var outBuffer = new char[Constants.BufferSize];
             var key = new BeaufortKey(Key);
             int read;
 
-            char[] outBuffer;
-            while ((read = source.Read(inBuffer, 0, bufferSize)) > 0)
+            while ((read = source.Read(inBuffer, 0, Constants.BufferSize)) > 0)
             {
-                outBuffer = operation(inBuffer, key);
+                operation(inBuffer, outBuffer, key);
                 dest.Write(outBuffer, 0, read);
             }
         }
