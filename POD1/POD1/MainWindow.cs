@@ -62,7 +62,16 @@ namespace POD1
                     using (var writer = new StreamWriter(new BufferedStream(_saveDialog.OpenFile())))
                     using (var reader = new StreamReader(new BufferedStream(_fileDialog.OpenFile())))
                     {
-                        TransformBetweenFiles(reader, writer, BeaufortCipher.Encrypt);
+                        var inBuffer = new char[Constants.BufferSize];
+                        var outBuffer = new char[Constants.BufferSize];
+                        var key = new BeaufortKey(Key);
+                        int read;
+
+                        while ((read = reader.Read(inBuffer, 0, Constants.BufferSize)) > 0)
+                        {
+                            BeaufortCipher.Encrypt(inBuffer, outBuffer, key);
+                            writer.Write(outBuffer, 0, read);
+                        }
                     }
                 }
                 else
@@ -72,20 +81,6 @@ namespace POD1
                         DecryptedText = reader.ReadToEnd();
                     }
                 }
-            }
-        }
-
-        void TransformBetweenFiles(StreamReader source, StreamWriter dest, Action<char[], char[], BeaufortKey> operation)
-        {
-            var inBuffer = new char[Constants.BufferSize];
-            var outBuffer = new char[Constants.BufferSize];
-            var key = new BeaufortKey(Key);
-            int read;
-
-            while ((read = source.Read(inBuffer, 0, Constants.BufferSize)) > 0)
-            {
-                operation(inBuffer, outBuffer, key);
-                dest.Write(outBuffer, 0, read);
             }
         }
 
@@ -121,7 +116,16 @@ namespace POD1
                     using (var writer = new StreamWriter(new BufferedStream(_saveDialog.OpenFile())))
                     using (var reader = new StreamReader(new BufferedStream(_fileDialog.OpenFile())))
                     {
-                        TransformBetweenFiles(reader, writer, BeaufortCipher.Decrypt);
+                        var inBuffer = new char[Constants.BufferSize];
+                        var outBuffer = new char[Constants.BufferSize];
+                        var key = new BeaufortKey(Key);
+                        int read;
+
+                        while ((read = reader.Read(inBuffer, 0, Constants.BufferSize)) > 0)
+                        {
+                            BeaufortCipher.Decrypt(inBuffer, outBuffer, key);
+                            writer.Write(outBuffer, 0, read);
+                        }
                     }
                 }
                 else

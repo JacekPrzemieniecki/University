@@ -25,7 +25,16 @@ namespace POD1
 
         public static void Encrypt(byte[] input, byte[] output, BeaufortKey key)
         {
-            Transform(input, output, key, EncryptOperation);
+            Debug.Assert(input.Length == output.Length);
+            for (var i = 0; i < input.Length; i++)
+            {
+                key.MoveNext();
+                var inputNormalized = input[i] - Constants.AsciiOffset;
+                byte plain = (byte) inputNormalized;
+                byte key1 = key.Current;
+                var outputNormalized = (byte) (plain > key1 ? (plain - key1) : (plain + Constants.AlphabetLength - key1));
+                output[i] = (byte) (outputNormalized + Constants.AsciiOffset);
+            }
         }
 
         public static string Decrypt(string encrypted, string key)
@@ -44,28 +53,13 @@ namespace POD1
 
         public static void Decrypt(byte[] input, byte[] output, BeaufortKey key)
         {
-            Transform(input, output, key, DecryptOperation);
-        }
-
-        static byte EncryptOperation(byte plain, byte key)
-        {
-            return (byte) (plain > key ? (plain - key) : (plain + Constants.AlphabetLength - key));
-        }
-
-        static byte DecryptOperation(byte encrypted, byte key)
-        {
-            var plain = encrypted + key;
-            return (byte) (plain < Constants.AlphabetLength ? plain : (plain - Constants.AlphabetLength));
-        }
-
-        static void Transform(byte[] input, byte[] output, BeaufortKey key, Func<byte, byte, byte> operation)
-        {
             Debug.Assert(input.Length == output.Length);
             for (var i = 0; i < input.Length; i++)
             {
                 key.MoveNext();
                 var inputNormalized = input[i] - Constants.AsciiOffset;
-                var outputNormalized = operation((byte) inputNormalized, key.Current);
+                var plain = (byte) inputNormalized + key.Current;
+                var outputNormalized = (byte) (plain < Constants.AlphabetLength ? plain : (plain - Constants.AlphabetLength));
                 output[i] = (byte) (outputNormalized + Constants.AsciiOffset);
             }
         }
