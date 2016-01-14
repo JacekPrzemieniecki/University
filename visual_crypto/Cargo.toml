@@ -1,0 +1,8 @@
+[package]
+name = "visual_crypto"
+version = "0.1.0"
+authors = ["Jacek Przemieniecki <jacek@przemieniecki.net>"]
+
+[dependencies]
+bmp = "*"
+rand = "0.3"
